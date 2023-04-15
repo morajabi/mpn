@@ -105,34 +105,40 @@ async function openvpn2() {
   await cmd($$`apt-get install curl socat make -y`);
 
   // docker
-  // await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
-  // await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
+  await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
+  await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
+  await cmd(
+    $$`sudo sh "curl -fsSL https://download.docker.com/linux/ubuntu/gpg| gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes"`
+    //   .pipeStdout(
+    // $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
+    //   $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
+    // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
+    // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
+    // )
+  );
+  await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+  let arch = await $$`dpkg --print-architecture`;
+  await $$`. /etc/os-release`;
+  let kinetic = await $$`echo "$VERSION_CODENAME"`;
+  await cmd(
+    $$`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
+      $$`sudo tee /etc/apt/sources.list.d/docker.list`
+    )
+    // .pipeStdout(`/dev/null`)
+  );
+  await cmd($$`sudo apt-get update`);
+  await cmd(
+    $$`sudo apt-get install docker-ce docker-ce-cli docker-compose-plugin -y`
+  );
   // await cmd(
-  //   $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
-  //     $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
-  //     // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
-  //     // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
-  //   )
+  //   $$`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
   // );
-  // await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
-  // let arch = await $$`dpkg --print-architecture`;
-  // let kinetic = await $$`. /etc/os-release && echo "$VERSION_CODENAME"`;
-  // await cmd(
-  //   $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
-  //     $$`sudo tee /etc/apt/sources.list.d/docker.list`
-  //   )
-  //   // .pipeStdout(`/dev/null`)
-  // );
-  // await cmd($$`sudo apt-get update`);
-  // await cmd(
-  //   $`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
-  // );
-  // await cmd($$`sudo systemctl enable docker.service`);
-  // await cmd($$`sudo systemctl enable containerd.service`);
-  // await cmd($`sudo systemctl start docker.service`);
-  // await cmd($`sudo systemctl start containerd.service`);
-  await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
-  await cmd($$`sudo sh ./get-docker.sh`);
+  await cmd($$`sudo systemctl enable docker.service`);
+  await cmd($$`sudo systemctl enable containerd.service`);
+  await cmd($`sudo systemctl start docker.service`);
+  await cmd($`sudo systemctl start containerd.service`);
+  // await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
+  // await cmd($$`sudo sh ./get-docker.sh`);
 
   // open ports
   await cmd($`ufw allow 993`);
