@@ -1,15 +1,10 @@
 #! /usr/bin/env node
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const path_1 = __importDefault(require("path"));
-const yargs_1 = __importDefault(require("yargs/yargs"));
-const helpers_1 = require("yargs/helpers");
-const prompts_1 = __importDefault(require("prompts"));
-const execa_1 = require("execa");
-const argv = (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv)).argv;
+import path from "path";
+import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
+import prompts from "prompts";
+import { $ } from "execa";
+const argv = yargs(hideBin(process.argv)).argv;
 function fromArgs(arg) {
     return arg in argv && typeof argv[arg] === "string" ? argv[arg] : undefined;
 }
@@ -57,7 +52,7 @@ const questions = [
     },
 ];
 (async () => {
-    const response = await (0, prompts_1.default)(questions);
+    const response = await prompts(questions);
     // const ssh = new NodeSSH();
     // let conn = await ssh.connect({
     //   host: response.host,
@@ -91,50 +86,50 @@ async function cmd(ch) {
 }
 async function openvpn2() {
     // prep
-    await cmd((0, execa_1.$) `apt-get update`);
-    await cmd((0, execa_1.$) `apt-get upgrade -y`);
-    await cmd((0, execa_1.$) `apt-get install curl socat make -y`);
+    await cmd($ `apt-get update`);
+    await cmd($ `apt-get upgrade -y`);
+    await cmd($ `apt-get install curl socat make -y`);
     // docker
-    await cmd((0, execa_1.$) `sudo apt-get install ca-certificates curl gnupg -y`);
-    await cmd((0, execa_1.$) `sudo install -m 0755 -d /etc/apt/keyrings`);
-    await cmd((0, execa_1.$) `curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout((0, execa_1.$) `sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`));
-    await cmd((0, execa_1.$) `sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
-    let arch = await (0, execa_1.$) `dpkg --print-architecture`;
-    let kinetic = await (0, execa_1.$) `. /etc/os-release && echo "$VERSION_CODENAME"`;
-    await cmd((0, execa_1.$) `echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`
-        .pipeStdout((0, execa_1.$) `sudo tee /etc/apt/sources.list.d/docker.list`)
+    await cmd($ `sudo apt-get install ca-certificates curl gnupg -y`);
+    await cmd($ `sudo install -m 0755 -d /etc/apt/keyrings`);
+    await cmd($ `curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout($ `sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`));
+    await cmd($ `sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+    let arch = await $ `dpkg --print-architecture`;
+    let kinetic = await $ `. /etc/os-release && echo "$VERSION_CODENAME"`;
+    await cmd($ `echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`
+        .pipeStdout($ `sudo tee /etc/apt/sources.list.d/docker.list`)
         .pipeStdout(`/dev/null`));
-    await cmd((0, execa_1.$) `sudo apt-get update`);
-    await cmd((0, execa_1.$) `sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`);
-    await cmd((0, execa_1.$) `sudo systemctl enable docker.service`);
-    await cmd((0, execa_1.$) `sudo systemctl enable containerd.service`);
+    await cmd($ `sudo apt-get update`);
+    await cmd($ `sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`);
+    await cmd($ `sudo systemctl enable docker.service`);
+    await cmd($ `sudo systemctl enable containerd.service`);
     // await cmd($`sudo systemctl start docker.service`);
     // await cmd($`sudo systemctl start containerd.service`);
     // open ports
-    await cmd((0, execa_1.$) `ufw allow 993`);
-    await cmd((0, execa_1.$) `ufw allow 443`);
-    await cmd((0, execa_1.$) `ufw allow 80`);
-    await cmd((0, execa_1.$) `ufw allow ssh`);
-    await cmd((0, execa_1.$) `ufw enable`);
+    await cmd($ `ufw allow 993`);
+    await cmd($ `ufw allow 443`);
+    await cmd($ `ufw allow 80`);
+    await cmd($ `ufw allow ssh`);
+    await cmd($ `ufw enable`);
     // clone
     const openVpnRepoDir = `/root/docker-stealth-openvpn`;
-    await cmd((0, execa_1.$)({ reject: false, cwd: "/root" }) `rm -rf /root/docker-stealth-openvpn`);
-    await cmd((0, execa_1.$) `git clone https://github.com/morajabi/docker-stealth-openvpn`);
-    await cmd((0, execa_1.$)({ cwd: openVpnRepoDir }) `./bin/init.sh`);
-    await cmd((0, execa_1.$)({ cwd: openVpnRepoDir }) `docker compose up -d`);
+    await cmd($({ reject: false, cwd: "/root" }) `rm -rf /root/docker-stealth-openvpn`);
+    await cmd($ `git clone https://github.com/morajabi/docker-stealth-openvpn`);
+    await cmd($({ cwd: openVpnRepoDir }) `./bin/init.sh`);
+    await cmd($({ cwd: openVpnRepoDir }) `docker compose up -d`);
     // create clients
     const configsDir = `/root/configs`;
-    await cmd((0, execa_1.$)({ cwd: `/root` }) `mkdir ${configsDir}`);
+    await cmd($({ cwd: `/root` }) `mkdir ${configsDir}`);
     const users = ["c1", "c2", "c3", "c4"];
     for (let username of users) {
-        let confPath = path_1.default.join(configsDir, `${username}.ovpn`);
-        await cmd((0, execa_1.$)({
+        let confPath = path.join(configsDir, `${username}.ovpn`);
+        await cmd($({
             cwd: openVpnRepoDir,
         }) `docker compose run --rm openvpn easyrsa build-client-full "${username}" nopass`);
-        await cmd((0, execa_1.$)({
+        await cmd($({
             cwd: openVpnRepoDir,
         }) `docker compose run --rm openvpn ovpn_getclient "${username}"`.pipeStdout(confPath));
-        await cmd((0, execa_1.$)({
+        await cmd($({
             cwd: openVpnRepoDir,
         }) `sudo sed -i "s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g" "${confPath}"`);
     }
@@ -233,7 +228,7 @@ async function installAndInitOpenVpn(conn) {
 async function createOpenVpnUsers(conn, clients) {
     const repoDir = "/root/docker-stealth-openvpn";
     const confgDir = "/root/configs";
-    const localConfigsDir = path_1.default.join(process.env.HOME, "movpn");
+    const localConfigsDir = path.join(process.env.HOME, "movpn");
     // docker-compose run --rm openvpn easyrsa build-client-full "$USERNAME" nopass
     // docker-compose run --rm openvpn ovpn_getclient "$USERNAME" > "$CONFIG_PATH"
     for (let client of clients) {
