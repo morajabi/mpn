@@ -6,6 +6,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import prompts, { PromptObject } from "prompts";
 import { SSHExecCommandResponse } from "node-ssh";
+import { $ } from "execa";
 const argv = yargs(hideBin(process.argv)).argv;
 
 function fromArgs(arg: string): string | undefined {
@@ -13,24 +14,24 @@ function fromArgs(arg: string): string | undefined {
 }
 
 const questions: Array<PromptObject<string>> = [
-  {
-    type: "text",
-    name: "host",
-    message: "Host/IP",
-    initial: fromArgs("host"),
-  },
-  {
-    type: "text",
-    name: "username",
-    message: "Username",
-    initial: "root",
-  },
-  {
-    type: "password",
-    name: "password",
-    message: "Password",
-    initial: fromArgs("password"),
-  },
+  // {
+  //   type: "text",
+  //   name: "host",
+  //   message: "Host/IP",
+  //   initial: fromArgs("host"),
+  // },
+  // {
+  //   type: "text",
+  //   name: "username",
+  //   message: "Username",
+  //   initial: "root",
+  // },
+  // {
+  //   type: "password",
+  //   name: "password",
+  //   message: "Password",
+  //   initial: fromArgs("password"),
+  // },
   {
     type: "select",
     name: "setup",
@@ -59,26 +60,116 @@ const questions: Array<PromptObject<string>> = [
 (async () => {
   const response = await prompts(questions);
 
-  const ssh = new NodeSSH();
+  // const ssh = new NodeSSH();
 
-  let conn = await ssh.connect({
-    host: response.host,
-    username: response.username,
-    password: response.password,
-  });
+  // let conn = await ssh.connect({
+  //   host: response.host,
+  //   username: response.username,
+  //   password: response.password,
+  // });
 
   console.log("connected to server.");
 
   if (response.setup === "vless") {
-    let domain = response.domain;
-    let email = response.email;
-    if (!domain) return console.error("domain invalid");
-    if (!email || !email.includes("@")) return console.error("email invalid");
-    await vless(conn, response.domain, response.email);
+    // let domain = response.domain;
+    // let email = response.email;
+    // if (!domain) return console.error("domain invalid");
+    // if (!email || !email.includes("@")) return console.error("email invalid");
+    // await vless(conn, response.domain, response.email);
   } else {
-    await openvpn(conn);
+    await openvpn2();
   }
 })();
+
+const isVerbose = "v" in argv;
+async function cmd(ch: ReturnType<typeof $>) {
+  let x = await ch;
+
+  if (isVerbose) {
+    console.info(x.stdout);
+  }
+
+  if (x.failed) {
+    console.error("Failed to run", x.command);
+    console.info(x.stdout);
+    console.error(x.stderr);
+    throw new Error("Command failed.");
+  }
+}
+
+async function openvpn2() {
+  // prep
+  await cmd($`apt-get update`);
+  await cmd($`apt-get upgrade -y`);
+  await cmd($`apt-get install curl socat make -y`);
+
+  // docker
+  await cmd($`sudo apt-get install ca-certificates curl gnupg -y`);
+  await cmd($`sudo install -m 0755 -d /etc/apt/keyrings`);
+  await cmd(
+    $`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
+      $`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
+    )
+  );
+  await cmd($`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+  let arch = await $`dpkg --print-architecture`;
+  let kinetic = await $`. /etc/os-release && echo "$VERSION_CODENAME"`;
+  await cmd(
+    $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`
+      .pipeStdout($`sudo tee /etc/apt/sources.list.d/docker.list`)
+      .pipeStdout(`/dev/null`)
+  );
+  await cmd($`sudo apt-get update`);
+  await cmd(
+    $`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
+  );
+  await cmd($`sudo systemctl enable docker.service`);
+  await cmd($`sudo systemctl enable containerd.service`);
+  // await cmd($`sudo systemctl start docker.service`);
+  // await cmd($`sudo systemctl start containerd.service`);
+
+  // open ports
+  await cmd($`ufw allow 993`);
+  await cmd($`ufw allow 443`);
+  await cmd($`ufw allow 80`);
+  await cmd($`ufw allow ssh`);
+  await cmd($`ufw enable`);
+
+  // clone
+  const openVpnRepoDir = `/root/docker-stealth-openvpn`;
+  await cmd(
+    $({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
+  );
+  await cmd($`git clone https://github.com/morajabi/docker-stealth-openvpn`);
+  await cmd($({ cwd: openVpnRepoDir })`./bin/init.sh`);
+  await cmd($({ cwd: openVpnRepoDir })`docker compose up -d`);
+
+  // create clients
+  const configsDir = `/root/configs`;
+  await cmd($({ cwd: `/root` })`mkdir ${configsDir}`);
+
+  const users = ["c1", "c2", "c3", "c4"];
+  for (let username of users) {
+    let confPath = path.join(configsDir, `${username}.ovpn`);
+    await cmd(
+      $({
+        cwd: openVpnRepoDir,
+      })`docker compose run --rm openvpn easyrsa build-client-full "${username}" nopass`
+    );
+    await cmd(
+      $({
+        cwd: openVpnRepoDir,
+      })`docker compose run --rm openvpn ovpn_getclient "${username}"`.pipeStdout(
+        confPath
+      )
+    );
+    await cmd(
+      $({
+        cwd: openVpnRepoDir,
+      })`sudo sed -i "s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g" "${confPath}"`
+    );
+  }
+}
 
 const root = "/root";
 async function installPre(conn: NodeSSH) {

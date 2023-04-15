@@ -5,33 +5,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
-const node_ssh_1 = require("node-ssh");
 const yargs_1 = __importDefault(require("yargs/yargs"));
 const helpers_1 = require("yargs/helpers");
 const prompts_1 = __importDefault(require("prompts"));
+const execa_1 = require("execa");
 const argv = (0, yargs_1.default)((0, helpers_1.hideBin)(process.argv)).argv;
 function fromArgs(arg) {
     return arg in argv && typeof argv[arg] === "string" ? argv[arg] : undefined;
 }
 const questions = [
-    {
-        type: "text",
-        name: "host",
-        message: "Host/IP",
-        initial: fromArgs("host"),
-    },
-    {
-        type: "text",
-        name: "username",
-        message: "Username",
-        initial: "root",
-    },
-    {
-        type: "password",
-        name: "password",
-        message: "Password",
-        initial: fromArgs("password"),
-    },
+    // {
+    //   type: "text",
+    //   name: "host",
+    //   message: "Host/IP",
+    //   initial: fromArgs("host"),
+    // },
+    // {
+    //   type: "text",
+    //   name: "username",
+    //   message: "Username",
+    //   initial: "root",
+    // },
+    // {
+    //   type: "password",
+    //   name: "password",
+    //   message: "Password",
+    //   initial: fromArgs("password"),
+    // },
     {
         type: "select",
         name: "setup",
@@ -58,26 +58,87 @@ const questions = [
 ];
 (async () => {
     const response = await (0, prompts_1.default)(questions);
-    const ssh = new node_ssh_1.NodeSSH();
-    let conn = await ssh.connect({
-        host: response.host,
-        username: response.username,
-        password: response.password,
-    });
+    // const ssh = new NodeSSH();
+    // let conn = await ssh.connect({
+    //   host: response.host,
+    //   username: response.username,
+    //   password: response.password,
+    // });
     console.log("connected to server.");
     if (response.setup === "vless") {
-        let domain = response.domain;
-        let email = response.email;
-        if (!domain)
-            return console.error("domain invalid");
-        if (!email || !email.includes("@"))
-            return console.error("email invalid");
-        await vless(conn, response.domain, response.email);
+        // let domain = response.domain;
+        // let email = response.email;
+        // if (!domain) return console.error("domain invalid");
+        // if (!email || !email.includes("@")) return console.error("email invalid");
+        // await vless(conn, response.domain, response.email);
     }
     else {
-        await openvpn(conn);
+        await openvpn2();
     }
 })();
+const isVerbose = "v" in argv;
+async function cmd(ch) {
+    let x = await ch;
+    if (isVerbose) {
+        console.info(x.stdout);
+    }
+    if (x.failed) {
+        console.error("Failed to run", x.command);
+        console.info(x.stdout);
+        console.error(x.stderr);
+        throw new Error("Command failed.");
+    }
+}
+async function openvpn2() {
+    // prep
+    await cmd((0, execa_1.$) `apt-get update`);
+    await cmd((0, execa_1.$) `apt-get upgrade -y`);
+    await cmd((0, execa_1.$) `apt-get install curl socat make -y`);
+    // docker
+    await cmd((0, execa_1.$) `sudo apt-get install ca-certificates curl gnupg -y`);
+    await cmd((0, execa_1.$) `sudo install -m 0755 -d /etc/apt/keyrings`);
+    await cmd((0, execa_1.$) `curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout((0, execa_1.$) `sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`));
+    await cmd((0, execa_1.$) `sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+    let arch = await (0, execa_1.$) `dpkg --print-architecture`;
+    let kinetic = await (0, execa_1.$) `. /etc/os-release && echo "$VERSION_CODENAME"`;
+    await cmd((0, execa_1.$) `echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`
+        .pipeStdout((0, execa_1.$) `sudo tee /etc/apt/sources.list.d/docker.list`)
+        .pipeStdout(`/dev/null`));
+    await cmd((0, execa_1.$) `sudo apt-get update`);
+    await cmd((0, execa_1.$) `sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`);
+    await cmd((0, execa_1.$) `sudo systemctl enable docker.service`);
+    await cmd((0, execa_1.$) `sudo systemctl enable containerd.service`);
+    // await cmd($`sudo systemctl start docker.service`);
+    // await cmd($`sudo systemctl start containerd.service`);
+    // open ports
+    await cmd((0, execa_1.$) `ufw allow 993`);
+    await cmd((0, execa_1.$) `ufw allow 443`);
+    await cmd((0, execa_1.$) `ufw allow 80`);
+    await cmd((0, execa_1.$) `ufw allow ssh`);
+    await cmd((0, execa_1.$) `ufw enable`);
+    // clone
+    const openVpnRepoDir = `/root/docker-stealth-openvpn`;
+    await cmd((0, execa_1.$)({ reject: false, cwd: "/root" }) `rm -rf /root/docker-stealth-openvpn`);
+    await cmd((0, execa_1.$) `git clone https://github.com/morajabi/docker-stealth-openvpn`);
+    await cmd((0, execa_1.$)({ cwd: openVpnRepoDir }) `./bin/init.sh`);
+    await cmd((0, execa_1.$)({ cwd: openVpnRepoDir }) `docker compose up -d`);
+    // create clients
+    const configsDir = `/root/configs`;
+    await cmd((0, execa_1.$)({ cwd: `/root` }) `mkdir ${configsDir}`);
+    const users = ["c1", "c2", "c3", "c4"];
+    for (let username of users) {
+        let confPath = path_1.default.join(configsDir, `${username}.ovpn`);
+        await cmd((0, execa_1.$)({
+            cwd: openVpnRepoDir,
+        }) `docker compose run --rm openvpn easyrsa build-client-full "${username}" nopass`);
+        await cmd((0, execa_1.$)({
+            cwd: openVpnRepoDir,
+        }) `docker compose run --rm openvpn ovpn_getclient "${username}"`.pipeStdout(confPath));
+        await cmd((0, execa_1.$)({
+            cwd: openVpnRepoDir,
+        }) `sudo sed -i "s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g" "${confPath}"`);
+    }
+}
 const root = "/root";
 async function installPre(conn) {
     // sudo apt-get update -y
@@ -128,6 +189,29 @@ async function installAndInitOpenVpn(conn) {
         "mkdir docker-stealth-openvpn",
         "git clone https://github.com/morajabi/docker-stealth-openvpn",
         "cd docker-stealth-openvpn",
+        // STDOUT: Command may disrupt existing ssh connections. Proceed with operation (y|n)? Aborted
+        // running clone and init openvpn 6 steps
+        // running: mkdir docker-stealth-openvpn
+        // STDOUT:
+        // running: git clone https://github.com/morajabi/docker-stealth-openvpn
+        // STDOUT:
+        // STDERR: Cloning into 'docker-stealth-openvpn'...
+        // running: cd docker-stealth-openvpn
+        // STDOUT:
+        // STDOUT:
+        // STDERR: bash: line 1: cd: /root/docker-stealth-openvpn: No such file or directory
+        // bash: line 1: ./bin/init.sh: No such file or directory
+        // STDOUT: docker-stealth-openvpn
+        // snap
+        // STDERR: bash: line 1: cd: /root/docker-stealth-openvpn: No such file or directory
+        // STDOUT:
+        // STDERR: bash: line 1: cd: /root/docker-stealth-openvpn: No such file or directory
+        // no configuration file provided: not found
+        // creating client mo
+        // running create client 4 steps
+        // running: mkdir /root/configs
+        // STDOUT:
+        // STDOUT:
         conn.execCommand(`./bin/init.sh`, 
         // `chmod +x ${repoDir}/bin/init.sh && ${repoDir}/bin/init.sh`,
         {
