@@ -167,9 +167,11 @@ async function openvpn2() {
   const configsDir = `/root/configs`;
   await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
 
-  const users = ["c1", "c2", "c3", "c4"];
+  const users = ["ce1", "ce2", "ce3", "ce4"];
+  const returnPaths = [];
   for (let username of users) {
     let confPath = path.join(configsDir, `${username}.ovpn`);
+    returnPaths.push(confPath);
     await cmd(
       $$({
         cwd: openVpnRepoDir,
@@ -189,6 +191,10 @@ async function openvpn2() {
       })`sudo sed -i "${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`}" "${confPath}"`
     );
   }
+
+  returnPaths.push(path.join(process.cwd(), "stunnel.conf"));
+
+  console.log(returnPaths);
 }
 
 const root = "/root";
