@@ -136,26 +136,26 @@ async function openvpn2() {
   // await cmd(
   //   $$`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
   // );
-  await cmd($$`sudo systemctl enable docker.service`);
+  // await cmd($$`sudo systemctl enable docker.service`);
   // await cmd($$`sudo systemctl enable containerd.service`);
-  await cmd($`sudo systemctl start docker.service`);
+  // await cmd($`sudo systemctl start docker.service`);
   // await cmd($`sudo systemctl start containerd.service`);
   // await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
   // await cmd($$`sudo sh ./get-docker.sh`);
 
   // open ports
-  await cmd($`ufw allow 993`);
-  await cmd($`ufw allow 443`);
-  await cmd($`ufw allow 80`);
-  await cmd($`ufw allow ssh`);
-  await cmd($`ufw enable`);
+  await cmd($$`ufw allow 993`);
+  await cmd($$`ufw allow 443`);
+  await cmd($$`ufw allow 80`);
+  await cmd($$`ufw allow ssh`);
+  await cmd($$`ufw enable`);
 
   // clone
   const openVpnRepoDir = `/root/docker-stealth-openvpn`;
   await cmd(
-    $({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
+    $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
   );
-  await cmd($`git clone https://github.com/morajabi/docker-stealth-openvpn`);
+  await cmd($$`git clone https://github.com/morajabi/docker-stealth-openvpn`);
   await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
   await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
