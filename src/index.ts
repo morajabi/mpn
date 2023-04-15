@@ -133,15 +133,6 @@ async function openvpn2() {
   await cmd(
     $$`sudo apt-get install docker-ce docker-ce-cli docker-compose-plugin -y`
   );
-  // await cmd(
-  //   $$`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
-  // );
-  // await cmd($$`sudo systemctl enable docker.service`);
-  // await cmd($$`sudo systemctl enable containerd.service`);
-  // await cmd($`sudo systemctl start docker.service`);
-  // await cmd($`sudo systemctl start containerd.service`);
-  // await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
-  // await cmd($$`sudo sh ./get-docker.sh`);
 
   // open ports
   await cmd($$`ufw allow 993`);
@@ -191,7 +182,7 @@ async function openvpn2() {
       $$({
         cwd: openVpnRepoDir,
         shell: true,
-      })`sudo sed -i ${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`} ${confPath}`
+      })`sudo sed -i ${`"s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g"`} ${confPath}`
     );
   }
 
