@@ -108,7 +108,7 @@ async function openvpn2() {
   await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
   await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
   await cmd(
-    $$`sudo sh "curl -fsSL https://download.docker.com/linux/ubuntu/gpg| gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes"`
+    $$`sudo sh "${`curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`}"`
     //   .pipeStdout(
     // $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
     //   $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
