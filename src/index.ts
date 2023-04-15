@@ -105,32 +105,34 @@ async function openvpn2() {
   await cmd($$`apt-get install curl socat make -y`);
 
   // docker
-  await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
-  await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
-  await cmd(
-    $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
-      $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
-      // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
-      // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
-    )
-  );
-  await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
-  let arch = await $$`dpkg --print-architecture`;
-  let kinetic = await $$`. /etc/os-release && echo "$VERSION_CODENAME"`;
-  await cmd(
-    $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
-      $$`sudo tee /etc/apt/sources.list.d/docker.list`
-    )
-    // .pipeStdout(`/dev/null`)
-  );
-  await cmd($$`sudo apt-get update`);
-  await cmd(
-    $`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
-  );
-  await cmd($$`sudo systemctl enable docker.service`);
-  await cmd($$`sudo systemctl enable containerd.service`);
+  // await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
+  // await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
+  // await cmd(
+  //   $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
+  //     $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
+  //     // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
+  //     // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
+  //   )
+  // );
+  // await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+  // let arch = await $$`dpkg --print-architecture`;
+  // let kinetic = await $$`. /etc/os-release && echo "$VERSION_CODENAME"`;
+  // await cmd(
+  //   $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
+  //     $$`sudo tee /etc/apt/sources.list.d/docker.list`
+  //   )
+  //   // .pipeStdout(`/dev/null`)
+  // );
+  // await cmd($$`sudo apt-get update`);
+  // await cmd(
+  //   $`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
+  // );
+  // await cmd($$`sudo systemctl enable docker.service`);
+  // await cmd($$`sudo systemctl enable containerd.service`);
   // await cmd($`sudo systemctl start docker.service`);
   // await cmd($`sudo systemctl start containerd.service`);
+  await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
+  await cmd($$`sudo sh ./get-docker.sh`);
 
   // open ports
   await cmd($`ufw allow 993`);
@@ -145,30 +147,30 @@ async function openvpn2() {
     $({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
   );
   await cmd($`git clone https://github.com/morajabi/docker-stealth-openvpn`);
-  await cmd($({ cwd: openVpnRepoDir })`./bin/init.sh`);
-  await cmd($({ cwd: openVpnRepoDir })`docker compose up -d`);
+  await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
+  await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
   // create clients
   const configsDir = `/root/configs`;
-  await cmd($({ cwd: `/root` })`mkdir ${configsDir}`);
+  await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`);
 
   const users = ["c1", "c2", "c3", "c4"];
   for (let username of users) {
     let confPath = path.join(configsDir, `${username}.ovpn`);
     await cmd(
-      $({
+      $$({
         cwd: openVpnRepoDir,
       })`docker compose run --rm openvpn easyrsa build-client-full "${username}" nopass`
     );
     await cmd(
-      $({
+      $$({
         cwd: openVpnRepoDir,
       })`docker compose run --rm openvpn ovpn_getclient "${username}"`.pipeStdout(
         confPath
       )
     );
     await cmd(
-      $({
+      $$({
         cwd: openVpnRepoDir,
       })`sudo sed -i "s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g" "${confPath}"`
     );
