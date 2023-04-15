@@ -110,6 +110,7 @@ async function openvpn2() {
   await cmd(
     $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
       $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
+      // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
     )
   );
   await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
