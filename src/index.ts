@@ -185,7 +185,7 @@ async function openvpn2() {
     await cmd(
       $$({
         cwd: openVpnRepoDir,
-      })`sudo sed -i "s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g" "${confPath}"`
+      })`sudo sed -i "${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`}" "${confPath}"`
     );
   }
 }
