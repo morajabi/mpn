@@ -121,7 +121,9 @@ async function openvpn2() {
   await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
   let arch = await $$`dpkg --print-architecture`;
   await $$({ shell: true })`. /etc/os-release`;
-  let kinetic = await $$`echo "$VERSION_CODENAME"`;
+  let kinetic = await $$({
+    shell: true,
+  })`". /etc/os-release && echo "$VERSION_CODENAME"`;
   await cmd(
     $$({
       shell: true,
