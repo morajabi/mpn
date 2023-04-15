@@ -125,7 +125,7 @@ async function openvpn2() {
   await cmd(
     $$({
       shell: true,
-    })`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable" | sudo tee /etc/apt/sources.list.d/docker.list`
+    })`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
   );
   await cmd($$`sudo apt-get update`);
   await cmd(
