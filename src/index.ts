@@ -160,7 +160,7 @@ async function openvpn2() {
   const configsDir = `/root/configs`;
   await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
 
-  const users = ["client33"];
+  const users = (fromArgs("clients") || "client1").split(",");
   // const users = ["cli1", "cli2", "cli3", "cli4"];
   const returnPaths = [];
   for (let username of users) {
@@ -178,12 +178,24 @@ async function openvpn2() {
         confPath
       )
     );
-    await cmd(
-      $$({
-        cwd: openVpnRepoDir,
-        shell: true,
-      })`sudo sed -i ${`"s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g"`} ${confPath}`
-    );
+    let file = await fs.promises.readFile(confPath, "utf8");
+    let newFile = file
+      .split("\n")
+      .map((line) => {
+        if (line.startsWith("remote ")) {
+          return "remote 127.0.0.1 41194 tcp";
+        } else {
+          return line;
+        }
+      })
+      .join("\n");
+    await fs.promises.writeFile(confPath, newFile);
+    // await cmd(
+    //   $$({
+    //     cwd: openVpnRepoDir,
+    //     shell: true,
+    //   })`sudo sed -i ${`"s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g"`} ${confPath}`
+    // );
   }
 
   const stunnelSrc = path.join(openVpnRepoDir, "stunnel.conf");
