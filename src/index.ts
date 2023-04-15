@@ -41,41 +41,29 @@ const questions: Array<PromptObject<string>> = [
       { title: "VLess + XTLS", value: "vless" },
     ],
   },
-  {
-    // type:(_,values) => values.setup == "vless" ? 'text' : null,
-    type: "text",
-    name: "domain",
-    message: "Enter your domain without http or www",
-    initial: fromArgs("domain"),
-  },
-  {
-    // type: (_,values) => values.setup == "vless" ? 'text' : null,
-    type: "text",
-    name: "email",
-    message: "Enter your email",
-    initial: fromArgs("email"),
-  },
+  // {
+  //   // type:(_,values) => values.setup == "vless" ? 'text' : null,
+  //   type: "text",
+  //   name: "domain",
+  //   message: "Enter your domain without http or www",
+  //   initial: fromArgs("domain"),
+  // },
+  // {
+  //   // type: (_,values) => values.setup == "vless" ? 'text' : null,
+  //   type: "text",
+  //   name: "email",
+  //   message: "Enter your email",
+  //   initial: fromArgs("email"),
+  // },
 ];
 
 (async () => {
   const response = await prompts(questions);
 
-  // const ssh = new NodeSSH();
-
-  // let conn = await ssh.connect({
-  //   host: response.host,
-  //   username: response.username,
-  //   password: response.password,
-  // });
-
-  console.log("connected to server.");
+  console.log("starting...");
 
   if (response.setup === "vless") {
-    // let domain = response.domain;
-    // let email = response.email;
-    // if (!domain) return console.error("domain invalid");
-    // if (!email || !email.includes("@")) return console.error("email invalid");
-    // await vless(conn, response.domain, response.email);
+    console.log("vless not supported yet.");
   } else {
     await openvpn2();
   }
@@ -111,12 +99,6 @@ async function openvpn2() {
     $$({
       shell: true,
     })`curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
-    //   .pipeStdout(
-    // $$`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
-    //   $$`sudo gpg --dearmor`.pipeStdout(`/etc/apt/keyrings/docker.gpg`)
-    // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
-    // $$`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes`
-    // )
   );
   await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
   let arch = await $$`dpkg --print-architecture`;
@@ -145,16 +127,16 @@ async function openvpn2() {
 
   // clone
   const openVpnRepoDir = `/root/docker-stealth-openvpn`;
-  // await cmd(
-  //   $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
-  // );
-  // await cmd(
-  //   $$({
-  //     cwd: `/root`,
-  //   })`git clone https://github.com/morajabi/docker-stealth-openvpn`
-  // );
-  // await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
-  // await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
+  await cmd(
+    $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
+  );
+  await cmd(
+    $$({
+      cwd: `/root`,
+    })`git clone https://github.com/morajabi/docker-stealth-openvpn`
+  );
+  await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
+  await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
   // create clients
   const configsDir = `/root/configs`;
@@ -215,6 +197,9 @@ async function openvpn2() {
       detached: true,
     })`npx serve`
   );
+
+  console.log("You can download configs at ip:3000");
+  console.log("Press control+c to close the download server anytime.");
 }
 
 const root = "/root";
