@@ -168,7 +168,7 @@ async function openvpn2() {
   const configsDir = `/root/configs`;
   await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
 
-  const users = ["ce1", "ce2", "ce3", "ce4"];
+  const users = ["client1", "client2", "client3", "client4"];
   const returnPaths = [];
   for (let username of users) {
     let confPath = path.join(configsDir, `${username}.ovpn`);
