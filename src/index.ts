@@ -98,33 +98,35 @@ async function cmd(ch: ReturnType<typeof $>) {
 }
 
 async function openvpn2() {
+  let $$ = $({ verbose: true });
   // prep
-  await cmd($`apt-get update`);
-  await cmd($`apt-get upgrade -y`);
-  await cmd($`apt-get install curl socat make -y`);
+  await cmd($$`apt-get update`);
+  await cmd($$`apt-get upgrade -y`);
+  await cmd($$`apt-get install curl socat make -y`);
 
   // docker
-  await cmd($`sudo apt-get install ca-certificates curl gnupg -y`);
-  await cmd($`sudo install -m 0755 -d /etc/apt/keyrings`);
+  await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
+  await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
   await cmd(
     $`curl -fsSL https://download.docker.com/linux/ubuntu/gpg`.pipeStdout(
       $`sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
     )
   );
-  await cmd($`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
-  let arch = await $`dpkg --print-architecture`;
-  let kinetic = await $`. /etc/os-release && echo "$VERSION_CODENAME"`;
+  await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+  let arch = await $$`dpkg --print-architecture`;
+  let kinetic = await $$`. /etc/os-release && echo "$VERSION_CODENAME"`;
   await cmd(
-    $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`
-      .pipeStdout($`sudo tee /etc/apt/sources.list.d/docker.list`)
-      .pipeStdout(`/dev/null`)
+    $`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
+      $$`sudo tee /etc/apt/sources.list.d/docker.list`
+    )
+    // .pipeStdout(`/dev/null`)
   );
-  await cmd($`sudo apt-get update`);
+  await cmd($$`sudo apt-get update`);
   await cmd(
     $`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
   );
-  await cmd($`sudo systemctl enable docker.service`);
-  await cmd($`sudo systemctl enable containerd.service`);
+  await cmd($$`sudo systemctl enable docker.service`);
+  await cmd($$`sudo systemctl enable containerd.service`);
   // await cmd($`sudo systemctl start docker.service`);
   // await cmd($`sudo systemctl start containerd.service`);
 
