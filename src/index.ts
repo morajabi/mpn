@@ -155,7 +155,11 @@ async function openvpn2() {
   await cmd(
     $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
   );
-  await cmd($$`git clone https://github.com/morajabi/docker-stealth-openvpn`);
+  await cmd(
+    $$({
+      cwd: `/root`,
+    })`git clone https://github.com/morajabi/docker-stealth-openvpn`
+  );
   await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
   await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
