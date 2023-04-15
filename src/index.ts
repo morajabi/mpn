@@ -98,7 +98,7 @@ async function cmd(ch: ReturnType<typeof $>) {
 }
 
 async function openvpn2() {
-  let $$ = $({ verbose: true });
+  let $$ = $({ verbose: true, reject: false });
   // prep
   await cmd($$`apt-get update`);
   await cmd($$`apt-get upgrade -y`);
