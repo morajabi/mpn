@@ -89,7 +89,7 @@ async function cmd(ch: ReturnType<typeof $>, opts?: { ignoreError?: boolean }) {
     console.info(x.stdout);
   }
 
-  if (x.failed && !opts.ignoreError) {
+  if (x.failed && !opts?.ignoreError) {
     console.error("Failed to run", x.command);
     console.info(x.stdout);
     console.error(x.stderr);
@@ -185,6 +185,7 @@ async function openvpn2() {
     await cmd(
       $$({
         cwd: openVpnRepoDir,
+        shell: true,
       })`sudo sed -i "${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`}" "${confPath}"`
     );
   }
