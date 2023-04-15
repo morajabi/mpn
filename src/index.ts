@@ -123,10 +123,9 @@ async function openvpn2() {
   await $$({ shell: true })`. /etc/os-release`;
   let kinetic = await $$`echo "$VERSION_CODENAME"`;
   await cmd(
-    $$`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
-      $$`sudo tee /etc/apt/sources.list.d/docker.list`
-    )
-    // .pipeStdout(`/dev/null`)
+    $$({
+      shell: true,
+    })`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable" | sudo tee /etc/apt/sources.list.d/docker.list`
   );
   await cmd($$`sudo apt-get update`);
   await cmd(
