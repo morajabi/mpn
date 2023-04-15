@@ -148,7 +148,7 @@ async function openvpn2() {
   await cmd($$`ufw allow 443`);
   await cmd($$`ufw allow 80`);
   await cmd($$`ufw allow ssh`);
-  await cmd($$`ufw enable`);
+  await cmd($$`ufw enable -y`);
 
   // clone
   const openVpnRepoDir = `/root/docker-stealth-openvpn`;
