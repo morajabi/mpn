@@ -123,7 +123,7 @@ async function openvpn2() {
   await $$({ shell: true })`. /etc/os-release`;
   let kinetic = await $$({
     shell: true,
-  })`". /etc/os-release && echo "$VERSION_CODENAME"`;
+  })`. /etc/os-release && echo "$VERSION_CODENAME"`;
   await cmd(
     $$({
       shell: true,
