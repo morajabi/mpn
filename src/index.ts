@@ -189,17 +189,17 @@ async function openvpn2() {
   );
   returnPaths.push(stunnelDist);
 
+  console.log("Output files:");
   console.log(returnPaths);
+  console.log("You can download configs at ip:3000");
+  console.log("Press control+c to close the download server anytime.");
+
   await cmd(
     $$({
       cwd: configsDir,
       input: "y",
-      detached: true,
     })`npx serve`
   );
-
-  console.log("You can download configs at ip:3000");
-  console.log("Press control+c to close the download server anytime.");
 }
 
 const root = "/root";
