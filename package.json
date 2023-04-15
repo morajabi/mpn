@@ -1,0 +1,30 @@
+{
+  "name": "movpn",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "movpn": "bin/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && node bin/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-ssh": "^13.1.0",
+    "prompts": "^2.4.2",
+    "yargs": "^17.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "@types/prompts": "^2.4.4",
+    "@types/yargs": "^17.0.24",
+    "prettier": "^2.8.7",
+    "ssh2-streams": "^0.4.10",
+    "typescript": "^5.0.4"
+  }
+}

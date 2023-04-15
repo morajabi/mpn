@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2017",
+    "lib": ["es2015"],
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "bin",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "paths": {
+      "*": ["node_modules/*", "src/types/*"]
+    },
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
+  },
+  "include": ["src/**/*"]
+}
