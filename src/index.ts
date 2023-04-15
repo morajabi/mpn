@@ -137,9 +137,9 @@ async function openvpn2() {
   //   $$`sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y`
   // );
   await cmd($$`sudo systemctl enable docker.service`);
-  await cmd($$`sudo systemctl enable containerd.service`);
+  // await cmd($$`sudo systemctl enable containerd.service`);
   await cmd($`sudo systemctl start docker.service`);
-  await cmd($`sudo systemctl start containerd.service`);
+  // await cmd($`sudo systemctl start containerd.service`);
   // await cmd($$`curl -fsSL https://get.docker.com -o get-docker.sh`);
   // await cmd($$`sudo sh ./get-docker.sh`);
 
