@@ -148,6 +148,7 @@ async function openvpn2() {
   await cmd($$`ufw allow 443`);
   await cmd($$`ufw allow 80`);
   await cmd($$`ufw allow 54321`);
+  await cmd($$`ufw allow 3000`);
   await cmd($$`ufw allow ssh`);
   await cmd($$({ input: "y" })`ufw enable`);
 
@@ -207,7 +208,8 @@ async function openvpn2() {
     $$({
       cwd: configsDir,
       input: "y",
-    })`npx serve --port 54321`
+      detached: true,
+    })`npx serve`
   );
 }
 
