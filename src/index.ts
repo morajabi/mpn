@@ -169,7 +169,8 @@ async function openvpn2() {
   const configsDir = `/root/configs`;
   await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
 
-  const users = ["cli1", "cli2", "cli3", "cli4"];
+  const users = ["client"];
+  // const users = ["cli1", "cli2", "cli3", "cli4"];
   const returnPaths = [];
   for (let username of users) {
     let confPath = path.join(configsDir, `${username}.ovpn`);
@@ -190,7 +191,7 @@ async function openvpn2() {
       $$({
         cwd: openVpnRepoDir,
         shell: true,
-      })`sudo sed -i "${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`}" "${confPath}"`
+      })`sudo sed -i ${`s/^remote .*\r$/remote 127.0.0.1 41194 tcp\r/g`} ${confPath}`
     );
   }
 
