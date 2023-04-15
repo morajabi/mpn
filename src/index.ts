@@ -120,7 +120,7 @@ async function openvpn2() {
   );
   await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
   let arch = await $$`dpkg --print-architecture`;
-  await $$`. /etc/os-release`;
+  await $$`sudo . /etc/os-release`;
   let kinetic = await $$`echo "$VERSION_CODENAME"`;
   await cmd(
     $$`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable"`.pipeStdout(
