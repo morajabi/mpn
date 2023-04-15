@@ -147,6 +147,7 @@ async function openvpn2() {
   await cmd($$`ufw allow 993`);
   await cmd($$`ufw allow 443`);
   await cmd($$`ufw allow 80`);
+  await cmd($$`ufw allow 54321`);
   await cmd($$`ufw allow ssh`);
   await cmd($$({ input: "y" })`ufw enable`);
 
@@ -192,9 +193,22 @@ async function openvpn2() {
     );
   }
 
-  returnPaths.push(path.join(process.cwd(), "stunnel.conf"));
+  const stunnelSrc = path.join(openVpnRepoDir, "stunnel.conf");
+  const stunnelDist = path.join(configsDir, "stunnel.conf");
+  await cmd(
+    $$({
+      cwd: openVpnRepoDir,
+    })`cp ${stunnelSrc} ${configsDir}`
+  );
+  returnPaths.push(stunnelDist);
 
   console.log(returnPaths);
+  await cmd(
+    $$({
+      cwd: configsDir,
+      input: "y",
+    })`npx serve --port 54321`
+  );
 }
 
 const root = "/root";
