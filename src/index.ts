@@ -82,14 +82,14 @@ const questions: Array<PromptObject<string>> = [
 })();
 
 const isVerbose = "v" in argv;
-async function cmd(ch: ReturnType<typeof $>) {
+async function cmd(ch: ReturnType<typeof $>, opts?: { ignoreError?: boolean }) {
   let x = await ch;
 
   if (isVerbose) {
     console.info(x.stdout);
   }
 
-  if (x.failed) {
+  if (x.failed && !opts.ignoreError) {
     console.error("Failed to run", x.command);
     console.info(x.stdout);
     console.error(x.stderr);
@@ -152,20 +152,20 @@ async function openvpn2() {
 
   // clone
   const openVpnRepoDir = `/root/docker-stealth-openvpn`;
-  await cmd(
-    $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
-  );
-  await cmd(
-    $$({
-      cwd: `/root`,
-    })`git clone https://github.com/morajabi/docker-stealth-openvpn`
-  );
-  await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
-  await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
+  // await cmd(
+  //   $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
+  // );
+  // await cmd(
+  //   $$({
+  //     cwd: `/root`,
+  //   })`git clone https://github.com/morajabi/docker-stealth-openvpn`
+  // );
+  // await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
+  // await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
   // create clients
   const configsDir = `/root/configs`;
-  await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`);
+  await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
 
   const users = ["c1", "c2", "c3", "c4"];
   for (let username of users) {
