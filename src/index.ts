@@ -39,6 +39,8 @@ const questions: Array<PromptObject<string>> = [
     choices: [
       { title: "OpenVPN with stunnel", description: "Nice", value: "openvpn" },
       { title: "VLess + XTLS", value: "vless" },
+      { title: "------------", disabled: true },
+      { title: "Create OpenVPN users", value: "add_openvpn_user" },
     ],
   },
   // {
@@ -64,8 +66,10 @@ const questions: Array<PromptObject<string>> = [
 
   if (response.setup === "vless") {
     console.log("vless not supported yet.");
-  } else {
+  } else if (response.setup === "openvpn") {
     await openvpn2();
+  } else if (response.setup === "add_openvpn_user") {
+    await openvpn2({ justClients: true });
   }
 })();
 
@@ -85,59 +89,61 @@ async function cmd(ch: ReturnType<typeof $>, opts?: { ignoreError?: boolean }) {
   }
 }
 
-async function openvpn2() {
+async function openvpn2(opts: { justClients?: boolean } = {}) {
   let $$ = $({ verbose: true, reject: false });
-  // prep
-  await cmd($$`apt-get update`);
-  await cmd($$`apt-get upgrade -y`);
-  await cmd($$`apt-get install curl socat make -y`);
-
-  // docker
-  await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
-  await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
-  await cmd(
-    $$({
-      shell: true,
-    })`curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
-  );
-  await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
-  let arch = await $$`dpkg --print-architecture`;
-  await $$({ shell: true })`. /etc/os-release`;
-  let kinetic = await $$({
-    shell: true,
-  })`. /etc/os-release && echo "$VERSION_CODENAME"`;
-  await cmd(
-    $$({
-      shell: true,
-    })`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
-  );
-  await cmd($$`sudo apt-get update`);
-  await cmd(
-    $$`sudo apt-get install docker-ce docker-ce-cli docker-compose-plugin -y`
-  );
-
-  // open ports
-  await cmd($$`ufw allow 993`);
-  await cmd($$`ufw allow 443`);
-  await cmd($$`ufw allow 80`);
-  await cmd($$`ufw allow 54321`);
-  await cmd($$`ufw allow 3000`);
-  await cmd($$`ufw allow ssh`);
-  await cmd($$({ input: "y" })`ufw enable`);
-
-  // clone
   const openVpnRepoDir = `/root/docker-stealth-openvpn`;
-  await cmd(
-    $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
-  );
-  await cmd(
-    $$({
-      cwd: `/root`,
-    })`git clone https://github.com/morajabi/docker-stealth-openvpn`
-  );
-  await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
-  await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
 
+  if (!opts.justClients) {
+    // prep
+    await cmd($$`apt-get update`);
+    await cmd($$`apt-get upgrade -y`);
+    await cmd($$`apt-get install curl socat make -y`);
+
+    // docker
+    await cmd($$`sudo apt-get install ca-certificates curl gnupg -y`);
+    await cmd($$`sudo install -m 0755 -d /etc/apt/keyrings`);
+    await cmd(
+      $$({
+        shell: true,
+      })`curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --batch --yes`
+    );
+    await cmd($$`sudo chmod a+r /etc/apt/keyrings/docker.gpg`);
+    let arch = await $$`dpkg --print-architecture`;
+    await $$({ shell: true })`. /etc/os-release`;
+    let kinetic = await $$({
+      shell: true,
+    })`. /etc/os-release && echo "$VERSION_CODENAME"`;
+    await cmd(
+      $$({
+        shell: true,
+      })`echo "deb [arch="${arch}" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "${kinetic}" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
+    );
+    await cmd($$`sudo apt-get update`);
+    await cmd(
+      $$`sudo apt-get install docker-ce docker-ce-cli docker-compose-plugin -y`
+    );
+
+    // open ports
+    await cmd($$`ufw allow 993`);
+    await cmd($$`ufw allow 443`);
+    await cmd($$`ufw allow 80`);
+    await cmd($$`ufw allow 54321`);
+    await cmd($$`ufw allow 3000`);
+    await cmd($$`ufw allow ssh`);
+    await cmd($$({ input: "y" })`ufw enable`);
+
+    // clone
+    await cmd(
+      $$({ reject: false, cwd: "/root" })`rm -rf /root/docker-stealth-openvpn`
+    );
+    await cmd(
+      $$({
+        cwd: `/root`,
+      })`git clone https://github.com/morajabi/docker-stealth-openvpn`
+    );
+    await cmd($$({ cwd: openVpnRepoDir })`./bin/init.sh`);
+    await cmd($$({ cwd: openVpnRepoDir })`docker compose up -d`);
+  }
   // create clients
   const configsDir = `/root/configs`;
   await cmd($$({ cwd: `/root` })`mkdir ${configsDir}`, { ignoreError: true });
