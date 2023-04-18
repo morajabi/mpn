@@ -58,7 +58,7 @@ const questions = [
     const response = await prompts(questions);
     console.log("starting...");
     if (response.setup === "vless") {
-        console.log("vless not supported yet.");
+        vless2();
     }
     else if (response.setup === "openvpn") {
         await openvpn2();
@@ -79,6 +79,27 @@ async function cmd(ch, opts) {
         console.error(x.stderr);
         throw new Error("Command failed.");
     }
+}
+async function vless2() {
+    let $$ = $({ verbose: true, reject: false });
+    // prep
+    await cmd($$ `apt-get update`);
+    await cmd($$ `apt-get upgrade -y`);
+    await cmd($$ `apt-get install curl socat make gnupg ca-certificates -y`);
+    // ufw
+    await cmd($$ `ufw allow 993`);
+    await cmd($$ `ufw allow 443`);
+    await cmd($$ `ufw allow 80`);
+    await cmd($$ `ufw allow 54321`);
+    await cmd($$ `ufw allow 3000`);
+    await cmd($$ `ufw allow ssh`);
+    await cmd($$({ input: "y" }) `ufw enable`);
+    // install x-ui
+    await cmd($$({
+        shell: true,
+        stdout: "pipe",
+    }) `bash <(curl -Ls https://raw.githubusercontent.com/sudospaes/x-ui/master/install.sh)`);
+    console.info("done.");
 }
 async function openvpn2(opts = {}) {
     let $$ = $({ verbose: true, reject: false });
